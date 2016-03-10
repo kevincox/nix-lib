@@ -74,6 +74,10 @@ let
 			type = types.listOf types.unspecified;
 			default = [];
 		};
+		options.upgradeStrategy = mkOption {
+			type = types.unspecified;
+			default = {};
+		};
 	};
 	module = {
 		options.apps = mkOption {
@@ -108,7 +112,7 @@ in {
 		stage2f = klib.toExe "stage2.sh" stage2;
 		sudo-user = if r.user == "root" then "" else "sudo '-u${r.user}'";
 	in {
-		inherit (r) id labels instances constraints mem disk healthChecks;
+		inherit (r) id labels instances constraints mem disk healthChecks upgradeStrategy;
 		
 		cpus = "JSON_UNSTRING${r.cpus}JSON_UNSTRING";
 		
