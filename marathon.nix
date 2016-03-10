@@ -41,6 +41,10 @@ let
 			type = types.str;
 			default = "root";
 		};
+		options.path = mkOption {
+			type = types.listOf types.path;
+			default = [];
+		};
 		options.env = mkOption {
 			type = types.attrsOf types.str;
 			default = {};
@@ -93,7 +97,8 @@ in {
 			];
 		};
 		apps = map (r: let
-		env = concatStringsSep " " (mapAttrsToList (k: v: "${k}='${v}'") r.env);
+		env-1 = { PATH = makeBinPath r.path; } // r.env;
+		env = concatStringsSep " " (mapAttrsToList (k: v: "${k}='${v}'") env-1);
 		env-pass = concatMapStringsSep " " (k: ''"${k}=$${k}"'') r.env-pass;
 		user-cmd = if isList r.exec then
 			r.exec
@@ -125,7 +130,7 @@ in {
 				set -eax
 				. /etc/kevincox-environment
 				nix-store -r ${stage2f} --add-root klib-marathon-stage-2 --indirect
-				echo "$@"
+				chown ${r.user}: .
 				exec ${sudo-user} env -i ${env-pass} ${stage2f} "$@"
 			'' "boostrap"
 		] ++ user-cmd;
