@@ -126,13 +126,13 @@ in {
 		
 		user = "root";
 		args = [
-			"bash" "-c" ''
+			"/run/current-system/sw/bin/bash" "-c" ''
 				set -eax
 				. /etc/kevincox-environment
 				nix-store -r ${stage2f} --add-root klib-marathon-stage-2 --indirect
 				chown ${r.user}: .
 				exec ${sudo-user} env -i ${env-pass} ${stage2f} "$@"
-			'' "boostrap"
+			'' "stage2" # "stage2" is used as $0.
 		] ++ user-cmd;
 	}) result.config.apps;
 	in stdenv.mkDerivation {
