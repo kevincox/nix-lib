@@ -82,6 +82,23 @@ let
 			type = types.unspecified;
 			default = {};
 		};
+		
+		options.dns = mkOption {
+			default = [];
+			type = types.listOf (types.submodule {
+					options.name = mkOption {
+						type = types.str;
+					};
+					options.cdn = mkOption {
+						type = types.bool;
+						default = false;
+					};
+					options.ttl = mkOption {
+						type = types.int;
+						default = 0;
+					};
+			});
+		};
 	};
 	module = {
 		options.apps = mkOption {
@@ -116,8 +133,14 @@ in {
 		'';
 		stage2f = klib.toExe "stage2.sh" stage2;
 		sudo-user = if r.user == "root" then "" else "sudo '-u${r.user}'";
+		dns-labels = listToAttrs (imap (i: e: {
+			name = "kevincox-dns-${toString i}";
+			value = builtins.toJSON { inherit (e) name cdn ttl; };
+		}) r.dns);
 	in {
-		inherit (r) id labels instances constraints mem disk healthChecks upgradeStrategy;
+		inherit (r) id instances constraints mem disk healthChecks upgradeStrategy;
+		
+		labels = dns-labels // r.labels;
 		
 		cpus = "JSON_UNSTRING${r.cpus}JSON_UNSTRING";
 		
