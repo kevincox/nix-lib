@@ -116,7 +116,7 @@ in {
 		apps = map (r: let
 		env-1 = { PATH = makeBinPath r.path; } // r.env;
 		env = concatStringsSep " " (mapAttrsToList (k: v: "${k}='${v}'") env-1);
-		env-pass = concatMapStringsSep " " (k: ''"${k}=$${k}"'') r.env-pass;
+		env-pass = concatMapStringsSep " " (k: ''"${k}=''${${k}}"'') r.env-pass;
 		user-cmd = if isList r.exec then
 			r.exec
 		else
