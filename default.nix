@@ -3,6 +3,7 @@ let
 	klib = rec {
 		load = file: import file { inherit nixpkgs klib; };
 		
+		gzip = load ./gzip;
 		marathon = load ./marathon.nix;
 		toExe = name: content: nixpkgs.stdenv.mkDerivation {
 			inherit name content;
