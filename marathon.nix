@@ -97,6 +97,10 @@ let
 		options.dns = mkOption {
 			default = [];
 			type = types.listOf (types.submodule {
+					options.type = mkOption {
+						type = types.str;
+						default = "A";
+					};
 					options.name = mkOption {
 						type = types.str;
 					};
@@ -107,6 +111,14 @@ let
 					options.ttl = mkOption {
 						type = types.int;
 						default = 0;
+					};
+					options.priority = mkOption {
+						type = types.nullOr types.int;
+						default = null;
+					};
+					options.weight = mkOption {
+						type = types.nullOr types.int;
+						default = null;
 					};
 			});
 		};
@@ -148,7 +160,7 @@ in {
 		stage2f = klib.toExe "stage2.sh" stage2;
 		dns-labels = listToAttrs (imap (i: e: {
 			name = "kevincox-dns-${toString i}";
-			value = builtins.toJSON { inherit (e) name cdn ttl; };
+			value = builtins.toJSON { inherit (e) type name cdn ttl priority weight; };
 		}) r.dns);
 	in {
 		inherit (r) id instances constraints mem disk healthChecks upgradeStrategy;
