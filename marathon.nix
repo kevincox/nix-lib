@@ -141,7 +141,7 @@ in {
 		env = concatStringsSep "\n" (mapAttrsToList (k: v: "${k}='${v}'") env-1);
 		env-pass = concatMapStringsSep " " (k: ''"${k}=''${${k}}"'') r.env-pass;
 		user-cmd = if isList r.exec then r.exec
-			else ["${pkgs.bash}/bin/bash" "-c" r.exec];
+			else ["${pkgs.bash}/bin/bash" "-c" "set -eux\n\n${r.exec}"];
 		change-user = if r.user == "root" then ""
 			else "${pkgs.utillinux}/bin/runuser '-u${r.user}' --";
 		stage2 = ''
