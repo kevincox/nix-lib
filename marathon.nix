@@ -123,17 +123,19 @@ let
 			});
 		};
 	};
-	module = {
-		options.apps = mkOption {
-			type = types.listOf app-type;
-		};
+	apps-type = mkOption {
+		type = types.listOf app-type;
 	};
 in {
 	config = configuration: let
 		result = lib.evalModules {
 			modules = [
-				{ config.apps = configuration; }
-				module
+				{
+					config._module.check = true;
+					
+					options.marathon.config = apps-type;
+					config.marathon.config = configuration;
+				}
 			];
 		};
 		apps = map (r: let
@@ -163,11 +165,19 @@ in {
 			value = builtins.toJSON { inherit (e) type name cdn ttl priority weight; };
 		}) r.dns);
 	in {
-		inherit (r) id instances constraints mem disk healthChecks upgradeStrategy;
+		inherit
+			stage2f;
+		inherit (r)
+			constraints
+			cpus
+			disk
+			healthChecks
+			id
+			instances
+			mem
+			upgradeStrategy;
 		
 		labels = dns-labels // r.labels;
-		
-		cpus = "JSON_UNSTRING${r.cpus}JSON_UNSTRING";
 		
 		ports = if isList r.ports then r.ports else range 1 r.ports;
 		requirePorts = isList r.ports;
@@ -181,20 +191,32 @@ in {
 				exec env -i ${env-pass} ${stage2f} "$@"
 			'' "stage2" # "stage2" is used as $0.
 		] ++ user-cmd;
-	}) result.config.apps;
+	}) result.config.marathon.config;
 	in stdenv.mkDerivation {
 		name = "marathon.json";
 		
+		buildInputs = with pkgs; [ nix ruby ];
+		
 		json = builtins.toJSON apps;
-		bash = pkgs.bash;
 		
 		builder = builtins.toFile "builder.sh" ''
 			source $stdenv/setup
 			
-			echo "$json" > "$out"
-			substituteInPlace "$out" \
-				--replace '"JSON_UNSTRING' "" \
-				--replace 'JSON_UNSTRING"' ""
+			ruby -e '
+				require "json"
+				
+				json = JSON.parse(ENV.fetch("json"))
+				json.each do |job|
+					script = job.delete "stage2f"
+					deps = IO.popen(%W[nix-store -qR #{script}]).each_line.map &:chomp
+					size = IO.popen(%W[du -sc -B1M] + deps).each_line.to_a.last.to_i
+					
+					job["cpus"] = job["cpus"].to_i
+					job["disk"] = job["disk"] + size + 1
+				end
+				
+				File.write ENV.fetch("out"), json.to_json
+			'
 		'';
 	};
 }
