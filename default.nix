@@ -1,7 +1,7 @@
 let
 	nixpkgs = import <nixpkgs> {};
 	klib = rec {
-		load = file: import file { inherit nixpkgs klib; };
+		load = file: import file { inherit nixpkgs; };
 		
 		gzip = load ./gzip;
 		marathon = load ./marathon.nix;
