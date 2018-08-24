@@ -6,6 +6,7 @@
 	unpackPhase = " ";
 
 	buildPhase = ''
+		cp "$src" gzip_dir
 		sed -i \
 			-e 's_^BC=.*_BC=${pkgs.bc}/bin/bc_' \
 			-e 's_^FIND=.*_FIND=${pkgs.findutils}/bin/find_' \
@@ -13,10 +14,10 @@
 			-e 's_^PARALLEL=.*_PARALLEL=${pkgs.parallel}/bin/parallel_' \
 			-e 's_^RM=.*_RM=${pkgs.coreutils}/bin/rm_' \
 			-e 's_^STAT=.*_STAT=${pkgs.coreutils}/bin/stat_' \
-			"$src"
+			"gzip_dir"
 	'';
 
 	installPhase = ''
-		install -Dm755 $src $out/bin/gzip_dir
+		install -Dm755 "$src" "$out/bin/gzip_dir"
 	'';
 }
